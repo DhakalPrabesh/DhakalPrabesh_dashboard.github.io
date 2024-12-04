@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Personal Financial Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .dashboard-container {
+            width: 100%;
+            max-width: 1024px;
+            height: 100vh;
+            background-color: #e0e5ec;
+            border-radius: 30px;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #2d3748;
+            box-shadow: 
+                20px 20px 60px #bec3c9,
+                -20px -20px 60px #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .logout-button {
+            background: linear-gradient(145deg, #ff6b6b, #ee5253);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 5px 5px 10px #bec3c9, -5px -5px 10px #ffffff;
+            margin-top: 10px;
+        }
+        .logout-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 7px 7px 15px #bec3c9, -7px -7px 15px #ffffff;
+        }
+        .year-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .year-navigation button {
+            background: #e0e5ec;
+            color: #2d3748;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 5px 5px 10px #bec3c9, -5px -5px 10px #ffffff;
+        }
+        .year-navigation button:hover {
+            color: #4a90e2;
+            box-shadow: inset 5px 5px 10px #bec3c9, inset -5px -5px 10px #ffffff;
+        }
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a90e2;
+            font-weight: 600;
+            margin: 0;
+            font-size: 28px;
+        }
+        h2 {
+            color: #4a90e2;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            color: #2d3748;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 10px;
+        }
+        input::placeholder {
+            color: #a0aec0;
+        }
+        .chart-container {
+            height: 200px;
+            background: #e0e5ec;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: inset 5px 5px 10px #bec3c9, inset -5px -5px 10px #ffffff;
+            margin-bottom: 20px;
+        }
+        #current-year {
+            font-weight: 600;
+            font-size: 18px;
+            color: #2d3748;
+        }
+        .add-button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(74,144,226,0.3);
+            margin-top: 10px;
+        }
+        .add-button:hover {
+            background: #3a7bc8;
+            transform: translateY(-2px);
+        }
+        .full-width {
+            grid-column: span 2;
+        }
+        .half-width {
+            flex: 1;
+        }
+        .chart-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            padding: 10px 0;
+            background-color: #e0e5ec;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+        
+        .chart-navigation button {
+            background: #e0e5ec;
+            color: #2d3748;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 5px 5px 10px #bec3c9, -5px -5px 10px #ffffff;
+        }
+        
+        .chart-navigation button:hover {
+            color: #4a90e2;
+            box-shadow: inset 5px 5px 10px #bec3c9, inset -5px -5px 10px #ffffff;
+        }
+        #current-month {
+            font-weight: 600;
+            margin: 0 15px;
+        }
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 15px;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .logout-button {
+                align-self: flex-end;
+                margin-top: -30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Personal Financial Dashboard</h1>
+            <button class="logout-button" id="logout-button">Logout</button>
+        </div>
+        
+        <div class="year-navigation">
+            <button id="prev-year">Previous Year</button>
+            <span id="current-year">2024</span>
+            <button id="next-year">Next Year</button>
+        </div>
+        
+        <div class="dashboard-content">
+            <div class="section">
+                <h2>Log Income</h2>
+                <form id="income-form">
+                    <input type="text" id="income-source" placeholder="Income Source" required>
+                    <input type="number" id="income-amount" placeholder="Amount" required>
+                    <input type="date" id="income-date" required>
+                    <button type="submit" class="add-button">Add Income</button>
+                </form>
+            </div>
+            
+            <div class="section">
+                <h2>Log Expense</h2>
+                <form id="expense-form">
+                    <input type="text" id="expense-category" placeholder="Expense Category" required>
+                    <input type="number" id="expense-amount" placeholder="Amount" required>
+                    <input type="date" id="expense-date" required>
+                    <button type="submit" class="add-button">Add Expense</button>
+                </form>
+            </div>
+            
+            <div class="section">
+                <h2>Balance Sheet</h2>
+                <div id="balance-sheet"></div>
+            </div>
+            
+            <div class="section">
+                <h2>Monthly Income vs Expenses</h2>
+                <div class="chart-container">
+                    <canvas id="monthly-income-expense-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="section full-width">
+                <h2>Expense Breakdown</h2>
+                <div class="chart-container">
+                    <canvas id="expense-breakdown-chart"></canvas>
+                </div>
+                <h2>Balance Sheet Trend</h2>
+                <div class="chart-container">
+                    <canvas id="balance-sheet-trend-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="chart-navigation">
+            <button id="prev-month">Previous Month</button>
+            <span id="current-month"></span>
+            <button id="next-month">Next Month</button>
+        </div>
+    </div>
+
+    <script>
+        let financialData = {};
+        let currentYear = new Date().getFullYear();
+        let monthlyIncomeExpenseChart = null;
+        let expenseBreakdownChart = null;
+        let balanceSheetTrendChart = null;
+
+        document.getElementById('current-year').textContent = currentYear;
+
+        document.getElementById('prev-year').addEventListener('click', () => {
+            currentYear--;
+            updateDashboard();
+        });
+
+        document.getElementById('next-year').addEventListener('click', () => {
+            currentYear++;
+            updateDashboard();
+        });
+
+        document.getElementById('income-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const source = document.getElementById('income-source').value;
+            const amount = parseFloat(document.getElementById('income-amount').value);
+            const date = new Date(document.getElementById('income-date').value);
+            addFinancialEntry('income', {source, amount, date});
+            updateDashboard();
+            this.reset();
+        });
+
+        document.getElementById('expense-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const category = document.getElementById('expense-category').value;
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const date = new Date(document.getElementById('expense-date').value);
+            addFinancialEntry('expense', {category, amount, date});
+            updateDashboard();
+            this.reset();
+        });
+
+        function addFinancialEntry(type, entry) {
+            const year = entry.date.getFullYear();
+            const month = entry.date.getMonth();
+            
+            if (!financialData[year]) {
+                financialData[year] = {};
+            }
+            if (!financialData[year][month]) {
+                financialData[year][month] = { incomes: [], expenses: [] };
+            }
+            
+            financialData[year][month][type === 'income' ? 'incomes' : 'expenses'].push(entry);
+        }
+
+        function updateDashboard() {
+            document.getElementById('current-year').textContent = currentYear;
+            updateBalanceSheet();
+            updateMonthlyIncomeExpenseChart();
+            updateExpenseBreakdownChart();
+            updateBalanceSheetTrendChart();
+        }
+
+        function updateBalanceSheet() {
+            const yearData = financialData[currentYear] || {};
+            let totalIncome = 0;
+            let totalExpenses = 0;
+
+            Object.values(yearData).forEach(monthData => {
+                totalIncome += monthData.incomes.reduce((sum, income) => sum + income.amount, 0);
+                totalExpenses += monthData.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            });
+
+            const balance = totalIncome - totalExpenses;
+            
+            document.getElementById('balance-sheet').innerHTML = `
+                <p>Total Income: ${Math.floor(totalIncome)}円</p>
+                <p>Total Expenses: ${Math.floor(totalExpenses)}円</p>
+                <p>Balance: ${Math.floor(balance)}円</p>
+            `;
+        }
+
+        function updateMonthlyIncomeExpenseChart() {
+            const ctx = document.getElementById('monthly-income-expense-chart').getContext('2d');
+            const yearData = financialData[currentYear] || {};
+            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const incomeData = new Array(12).fill(0);
+            const expenseData = new Array(12).fill(0);
+
+            Object.entries(yearData).forEach(([month, data]) => {
+                incomeData[month] = data.incomes.reduce((sum, income) => sum + income.amount, 0);
+                expenseData[month] = data.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            });
+
+            if (monthlyIncomeExpenseChart) {
+                monthlyIncomeExpenseChart.destroy();
+            }
+
+            monthlyIncomeExpenseChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: incomeData.map(Math.floor),
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                        },
+                        {
+                            label: 'Expenses',
+                            data: expenseData.map(Math.floor),
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return Math.floor(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += Math.floor(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateExpenseBreakdownChart() {
+            const yearData = financialData[currentYear] || {};
+            const expenseCategories = {};
+
+            Object.values(yearData).forEach(monthData => {
+                monthData.expenses.forEach(expense => {
+                    expenseCategories[expense.category] = (expenseCategories[expense.category] || 0) + expense.amount;
+                });
+            });
+
+            const ctx = document.getElementById('expense-breakdown-chart').getContext('2d');
+            
+            if (expenseBreakdownChart) {
+                expenseBreakdownChart.destroy();
+            }
+            
+            expenseBreakdownChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(expenseCategories),
+                    datasets: [{
+                        data: Object.values(expenseCategories).map(Math.floor),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += Math.floor(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateBalanceSheetTrendChart() {
+            const ctx = document.getElementById('balance-sheet-trend-chart').getContext('2d');
+            // This is dummy data. Replace with actual data for the current month
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const data = Array.from({length: daysInMonth}, () => Math.floor(Math.random() * 100));
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: daysInMonth}, (_, i) => i + 1),
+                    datasets: [{
+                        label: 'Daily Balance',
+                        data: data,
+                        borderColor: '#4a90e2',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return Math.floor(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += Math.floor(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add this at the end of your script
+        document.getElementById('logout-button').addEventListener('click', function() {
+            // Here you would typically clear any user session data
+            // For now, we'll just redirect to a hypothetical login page
+            window.location.href = 'login.html';
+        });
+
+        // Initial dashboard update
+        updateDashboard();
+
+        function scaleDashboard() {
+            const container = document.querySelector('.dashboard-container');
+            const scaleX = window.innerWidth / container.offsetWidth;
+            const scaleY = window.innerHeight / container.offsetHeight;
+            const scale = Math.min(scaleX, scaleY);
+            container.style.transform = `scale(${scale})`;
+            container.style.transformOrigin = 'center';
+        }
+
+        window.addEventListener('load', scaleDashboard);
+        window.addEventListener('resize', scaleDashboard);
+
+        // Adjust Chart.js options for better visibility on light background
+        Chart.defaults.color = '#2d3748';
+        Chart.defaults.scale.grid.color = '#cbd5e0';
+
+        // Ensure charts are responsive
+        function resizeCharts() {
+            const charts = document.querySelectorAll('canvas');
+            charts.forEach(chart => {
+                chart.style.width = '100%';
+                chart.style.height = '100%';
+                chart.height = chart.offsetHeight;
+                chart.width = chart.offsetWidth;
+            });
+        }
+
+        window.addEventListener('load', resizeCharts);
+        window.addEventListener('resize', resizeCharts);
+
+        let currentMonth = new Date().getMonth();
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"];
+
+        function updateCharts() {
+            document.getElementById('current-month').textContent = monthNames[currentMonth];
+            updateExpenseBreakdownChart();
+            updateBalanceSheetTrendChart();
+        }
+
+        function updateExpenseBreakdownChart() {
+            // Update this function to show data for the current month
+        }
+
+        function updateBalanceSheetTrendChart() {
+            const ctx = document.getElementById('balance-sheet-trend-chart').getContext('2d');
+            // This is dummy data. Replace with actual data for the current month
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const data = Array.from({length: daysInMonth}, () => Math.floor(Math.random() * 100));
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: daysInMonth}, (_, i) => i + 1),
+                    datasets: [{
+                        label: 'Daily Balance',
+                        data: data,
+                        borderColor: '#4a90e2',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentMonth = (currentMonth - 1 + 12) % 12;
+            updateCharts();
+        });
+
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentMonth = (currentMonth + 1) % 12;
+            updateCharts();
+        });
+
+        // Initial chart creation
+        window.addEventListener('load', updateCharts);
+    </script>
+</body>
+</html>
